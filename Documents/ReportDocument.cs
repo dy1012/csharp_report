@@ -91,6 +91,7 @@ namespace EveReport.Documents {
     /// <param name="d"></param>
     /// <param name="e"></param>
     static void OnHeaderTemplatePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+      ((ReportDocument)d).Draw();
     }
 
     /// <summary>
@@ -99,6 +100,7 @@ namespace EveReport.Documents {
     /// <param name="d"></param>
     /// <param name="e"></param>
     static void OnFooterTemplatePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+      ((ReportDocument)d).Draw();
     }
 
     #endregion
@@ -117,9 +119,6 @@ namespace EveReport.Documents {
 
       this.Blocks.Clear();
 
-      var table = new Table();
-      table.CellSpacing = 0;
-
       var rowGroup = new TableRowGroup();
       rowGroup.Rows.Add(this.CreateHeader(template));
 
@@ -128,22 +127,38 @@ namespace EveReport.Documents {
         row.DataContext = item;
         rowGroup.Rows.Add(row);
       }
-      
+
+      var rowTable = this.CreateTable(template);
+      rowTable.RowGroups.Add(rowGroup);
+
       if (headerTemplate != null) {
         var headerGroup = new TableRowGroup();
         headerGroup.Rows.Add(this.CreateRow(headerTemplate));
-        table.RowGroups.Add(headerGroup);
+
+        var headerTable = this.CreateTable(headerTemplate);
+        headerTable.RowGroups.Add(headerGroup);
+        this.Blocks.Add(headerTable);
       }
 
-      table.RowGroups.Add(rowGroup);
+      this.Blocks.Add(rowTable);
 
       if (footerTemplate != null) {
         var footerGroup = new TableRowGroup();
         footerGroup.Rows.Add(this.CreateRow(footerTemplate));
-        table.RowGroups.Add(footerGroup);
-      }
 
-      this.Blocks.Add(table);
+        var footerTable = this.CreateTable(footerTemplate);
+        footerTable.RowGroups.Add(footerGroup);
+        this.Blocks.Add(footerTable);
+      }
+    }
+
+    Table CreateTable(Template template) {
+      var result = new Table() { CellSpacing = 0 };
+
+      if (template.Columns.Count > 0)
+        foreach (var column in template.Columns) result.Columns.Add(column);
+
+      return result;
     }
 
     /// <summary>
